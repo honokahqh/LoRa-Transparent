@@ -14,7 +14,7 @@
  *              (______/|_____)_|_|_| \__)_____)\____)_| |_|
  *              (C)2013-2017 Semtech
  *
- * \endcode  
+ * \endcode
  *
  * \author    Miguel Luis ( Semtech )
  *
@@ -29,28 +29,28 @@
 #include "tremo_system.h"
 
 #include "lora_core.h"
-//#define REGION_CN470
-//#define USE_MODEM_LORA
+// #define REGION_CN470
+// #define USE_MODEM_LORA
 
-#define RF_FREQUENCY                                470000000 // Hz
+#define TAG "LoRa driver"
 
-#define TX_OUTPUT_POWER                             22        // dBm
+#define RF_FREQUENCY 470000000 // Hz
 
+#define TX_OUTPUT_POWER 22 // dBm
 
-#define LORA_BANDWIDTH                              0         // [0: 125 kHz,
-                                                              //  1: 250 kHz,
-                                                              //  2: 500 kHz,
-                                                              //  3: Reserved]
-#define LORA_SPREADING_FACTOR                       7         // [SF7..SF12]
-#define LORA_CODINGRATE                             1         // [1: 4/5,
-                                                              //  2: 4/6,
-                                                              //  3: 4/7,
-                                                              //  4: 4/8]
-#define LORA_PREAMBLE_LENGTH                        8         // Same for Tx and Rx
-#define LORA_SYMBOL_TIMEOUT                         0         // Symbols
-#define LORA_FIX_LENGTH_PAYLOAD_ON                  false
-#define LORA_IQ_INVERSION_ON                        false
-
+#define LORA_BANDWIDTH 0        // [0: 125 kHz,
+                                //  1: 250 kHz,
+                                //  2: 500 kHz,
+                                //  3: Reserved]
+#define LORA_SPREADING_FACTOR 7 // [SF7..SF12]
+#define LORA_CODINGRATE 1       // [1: 4/5,
+                                //  2: 4/6,
+                                //  3: 4/7,
+                                //  4: 4/8]
+#define LORA_PREAMBLE_LENGTH 8  // Same for Tx and Rx
+#define LORA_SYMBOL_TIMEOUT 0   // Symbols
+#define LORA_FIX_LENGTH_PAYLOAD_ON false
+#define LORA_IQ_INVERSION_ON false
 
 typedef enum
 {
@@ -60,9 +60,9 @@ typedef enum
     RX_ERROR,
     TX,
     TX_TIMEOUT
-}States_t;
+} States_t;
 
-#define RX_TIMEOUT_VALUE                            0
+#define RX_TIMEOUT_VALUE 0
 
 volatile States_t State = LOWPOWER;
 
@@ -79,27 +79,27 @@ static RadioEvents_t RadioEvents;
 /*!
  * \brief Function to be executed on Radio Tx Done event
  */
-void OnTxDone( void );
+void OnTxDone(void);
 
 /*!
  * \brief Function to be executed on Radio Rx Done event
  */
-void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr );
+void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr);
 
 /*!
  * \brief Function executed on Radio Tx Timeout event
  */
-void OnTxTimeout( void );
+void OnTxTimeout(void);
 
 /*!
  * \brief Function executed on Radio Rx Timeout event
  */
-void OnRxTimeout( void );
+void OnRxTimeout(void);
 
 /*!
  * \brief Function executed on Radio Rx Error event
  */
-void OnRxError( void );
+void OnRxError(void);
 
 /**
  * Main application entry point.
@@ -115,119 +115,117 @@ void lora_init()
     RadioEvents.TxTimeout = OnTxTimeout;
     RadioEvents.RxTimeout = OnRxTimeout;
     RadioEvents.RxError = OnRxError;
-    
-    Radio.Init( &RadioEvents );
+
+    Radio.Init(&RadioEvents);
     /* 1.尚未入网 使用基本参数 2.已入网 使用主机提供的参数 */
-    if(Lora_State.NetOpen){
-        Radio.SetChannel(470000000);//注册信道
-        Debug_B("Register Channel\r\n");
-        Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
-                                   LORA_SPREADING_FACTOR, LORA_CODINGRATE,
-                                   LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
-                                   true, 0, 0, LORA_IQ_INVERSION_ON, 3000 );
+    if (LoRaDevice.NetMode)
+    {
+        Radio.SetChannel(470000000); // 注册信道
+        Radio.SetTxConfig(MODEM_LORA, TX_OUTPUT_POWER, 0, LORA_BANDWIDTH,
+                          LORA_SPREADING_FACTOR, LORA_CODINGRATE,
+                          LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
+                          true, 0, 0, LORA_IQ_INVERSION_ON, 3000);
 
-        Radio.SetRxConfig( MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
-                                   LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
-                                   LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
-                                   0, true, 0, 0, LORA_IQ_INVERSION_ON, true );
+        Radio.SetRxConfig(MODEM_LORA, LORA_BANDWIDTH, LORA_SPREADING_FACTOR,
+                          LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
+                          LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
+                          0, true, 0, 0, LORA_IQ_INVERSION_ON, true);
     }
-    else{
-        Radio.SetChannel(472000000 + Lora_State.Channel*200000 );//472MHz + 200KHz*Channel
+    else
+    {
+        Radio.SetChannel(472000000 + LoRaDevice.channel * 200000); // 472MHz + 200KHz*Channel
+        Radio.SetTxConfig(MODEM_LORA, TX_OUTPUT_POWER, 0, LoRaDevice.BandWidth,
+                          LoRaDevice.SpreadingFactor, LORA_CODINGRATE,
+                          LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
+                          true, 0, 0, LORA_IQ_INVERSION_ON, 3000);
 
-        Debug_B("Private Channel %d\r\n",Lora_State.Channel);
-        Radio.SetTxConfig( MODEM_LORA, TX_OUTPUT_POWER, 0, Lora_Para_AT.BandWidth,
-                                   Lora_Para_AT.SpreadingFactor, LORA_CODINGRATE,
-                                   LORA_PREAMBLE_LENGTH, LORA_FIX_LENGTH_PAYLOAD_ON,
-                                   true, 0, 0, LORA_IQ_INVERSION_ON, 3000 );
-
-        Radio.SetRxConfig( MODEM_LORA, Lora_Para_AT.BandWidth, Lora_Para_AT.SpreadingFactor,
-                                   LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
-                                   LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
-                                   0, true, 0, 0, LORA_IQ_INVERSION_ON, true );
+        Radio.SetRxConfig(MODEM_LORA, LoRaDevice.BandWidth, LoRaDevice.SpreadingFactor,
+                          LORA_CODINGRATE, 0, LORA_PREAMBLE_LENGTH,
+                          LORA_SYMBOL_TIMEOUT, LORA_FIX_LENGTH_PAYLOAD_ON,
+                          0, true, 0, 0, LORA_IQ_INVERSION_ON, true);
     }
-	Radio.Rx( RX_TIMEOUT_VALUE );
+    Radio.Rx(RX_TIMEOUT_VALUE);
 }
 void Lora_IRQ_Rrocess(void)
 {
-    Radio.IrqProcess();// Process Radio IRQ
-    switch( State )
+    Radio.IrqProcess(); // Process Radio IRQ
+    switch (State)
     {
     case RX:
         CusProfile_Receive();
-        Radio.Rx( RX_TIMEOUT_VALUE );
+        Radio.Rx(RX_TIMEOUT_VALUE);
         State = LOWPOWER;
-        break;  
+        break;
     case RX_TIMEOUT:
     case RX_ERROR:
     case TX:
     case TX_TIMEOUT:
-		State = LOWPOWER;
+        State = LOWPOWER;
         break;
     case LOWPOWER:
         break;
     }
 }
 
-void OnTxDone( void )
+void OnTxDone(void)
 {
     State = TX;
-	Radio.Rx( RX_TIMEOUT_VALUE );
+    Radio.Rx(RX_TIMEOUT_VALUE);
 }
 
-void OnRxDone( uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr )
+void OnRxDone(uint8_t *payload, uint16_t size, int16_t rssi, int8_t snr)
 {
-    Radio.Sleep( );
-	memcpy( Lora_State.Rx_Data, payload, size );
-    Lora_State.Rx_RSSI = rssi;
-    Lora_State.Rx_Len = size;
+    Radio.Sleep();
+    memcpy(LoRaPacket.Rx_Data, payload, size);
+    LoRaPacket.Rx_RSSI = rssi;
+    LoRaPacket.Rx_Len = size;
     RssiValue = rssi;
     SnrValue = snr;
     State = RX;
 }
 
-void OnTxTimeout( void )
+void OnTxTimeout(void)
 {
     State = TX_TIMEOUT;
-	Radio.Rx( RX_TIMEOUT_VALUE );
+    Radio.Rx(RX_TIMEOUT_VALUE);
 }
 
-void OnRxTimeout( void )
+void OnRxTimeout(void)
 {
     State = RX_TIMEOUT;
-	Radio.Rx( RX_TIMEOUT_VALUE );
+    Radio.Rx(RX_TIMEOUT_VALUE);
 }
 
-void OnRxError( void )
+void OnRxError(void)
 {
     State = RX_ERROR;
-	Radio.Rx( RX_TIMEOUT_VALUE );
+    Radio.Rx(RX_TIMEOUT_VALUE);
 }
-
 
 void Wait2TXEnd()
 {
-	static uint32_t err_count = 0;
-	uint32_t count = 0;
-    while(State != TX && State != TX_TIMEOUT)
-	{
-		Radio.IrqProcess();
-		delay_ms(1);
-		count++;
-		if(count > 500)
-		{
-			err_count++;
-			break;
-		}
-	}
-    Debug_B("%d ms\r\n",(int)count);
-	if(err_count > 10)
-		system_reset();
-    Radio.Rx( RX_TIMEOUT_VALUE );
-} 
+    static uint32_t err_count = 0;
+    uint32_t count = 0;
+    while (State != TX && State != TX_TIMEOUT)
+    {
+        Radio.IrqProcess();
+        delay_ms(1);
+        count++;
+        if (count > 500)
+        {
+            LOG_E(TAG, "Wait2TXEnd timeout\r\n");
+            err_count++;
+            break;
+        }
+    }
+    if (err_count > 10)
+        system_reset();
+    Radio.Rx(RX_TIMEOUT_VALUE);
+}
 
 void Wait2RXEnd()
 {
-    while(State != RX && State != RX_TIMEOUT)
+    while (State != RX && State != RX_TIMEOUT)
         Radio.IrqProcess();
     Radio.Sleep();
-} 
+}

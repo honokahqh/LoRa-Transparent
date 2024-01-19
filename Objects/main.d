@@ -55,4 +55,4 @@ objects/main.o: src/main.c \
  peripheral/inc/tremo_timer.h peripheral/inc/tremo_lptimer.h \
  peripheral/inc/tremo_regs.h peripheral/inc/tremo_wdg.h \
  peripheral/inc/tremo_dac.h src/ptos/pt.h src/ptos/lc.h \
- src/ptos/lc-switch.h src/ptos/pt-timer.h
+ src/ptos/lc-switch.h src/ptos/pt-timer.h src/user/log.h src/user/APP.h

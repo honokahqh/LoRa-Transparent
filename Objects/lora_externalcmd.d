@@ -1,5 +1,5 @@
-objects/lora_flash.o: src/user/lora_profile/lora_flash.c \
- src/user/lora_profile/Lora_core.h \
+objects/lora_externalcmd.o: src/user/lora_profile/lora_externalCmd.c \
+ src/user/lora_profile/lora_core.h \
  e:\software\gcc_2021.10\lib\gcc\arm-none-eabi\10.3.1\include\stdint.h \
  e:\software\gcc_2021.10\arm-none-eabi\include\stdint.h \
  e:\software\gcc_2021.10\arm-none-eabi\include\machine\_default_types.h \
@@ -55,4 +55,4 @@ objects/lora_flash.o: src/user/lora_profile/lora_flash.c \
  peripheral/inc/tremo_dac.h src/ptos/pt.h src/ptos/lc.h \
  src/ptos/lc-switch.h src/ptos/pt-timer.h src/user/log.h src/user/APP.h \
  src/user/lora_profile/lora_flash.h src/user/lora_profile/lora_user.h \
- src/user/lora_profile/lora_core.h src/user/lora_profile/lora_at_cmd.h
+ src/user/lora_profile/lora_at_cmd.h

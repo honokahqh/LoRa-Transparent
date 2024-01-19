@@ -536,6 +536,11 @@
               <FileType>1</FileType>
               <FilePath>.\src\user\lora_profile\lora_user.c</FilePath>
             </File>
+            <File>
+              <FileName>lora_externalCmd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\src\user\lora_profile\lora_externalCmd.c</FilePath>
+            </File>
           </Files>
         </Group>
       </Groups>

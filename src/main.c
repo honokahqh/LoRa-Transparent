@@ -2,6 +2,8 @@
 #include <string.h>
 #include "APP.h"
 
+#define TAG "main" 
+
 static void BSTimer_Init(void);
 static void watch_dog_init(void);
 static void board_init(void);
@@ -15,26 +17,27 @@ int main(void)
     uint8_t BleRxTimeout = 50;
     board_init();                                // 硬件初始化
     Lora_StateInit();                            // 状态初始化
-    delay_ms(((Lora_State.chip_ID) % 10) * 100); // 随机延迟
+    delay_ms(((LoRaDevice.chip_ID) % 10) * 100); // 随机延迟
     lora_init();                                 // lora初始化
     wdg_reload();                                // 看门狗喂狗
     sprintf(BleBuffer, "AT+NAME?\r\n");
-    UART1_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));    
-    sprintf(BleBuffer, "%s%02X%02X\r\n", prefix, Lora_State.chip_ID >> 8, Lora_State.chip_ID & 0xFF);
+    UART1_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
+    sprintf(BleBuffer, "%s%02X%02X\r\n", prefix, LoRaDevice.chip_ID >> 8, LoRaDevice.chip_ID & 0xFF);
     while (BleRxTimeout--)
     {
         if (ble_state.has_data)
         {
-            sprintf(BleBuffer, "+NAME:乐清%s", Lora_State.SelfName);
+            sprintf(BleBuffer, "+NAME:乐清%s", LoRaDevice.Self.name);
             if (strncmp(ble_state.rx_buff, BleBuffer, strlen(BleBuffer)) == 0)
             {
-                Debug_B("ble receive:%s\r\n", ble_state.rx_buff);
+                LOG_I(TAG, "ble receive:%s\r\n", ble_state.rx_buff);
                 break;
             }
             else
             {
                 delay_ms(100);
-                sprintf(BleBuffer, "AT+NAME=乐清%s\r\n", Lora_State.SelfName);
+                LOG_W(TAG, "ble name error, receive:%s\r\n", ble_state.rx_buff);
+                sprintf(BleBuffer, "AT+NAME=乐清%s\r\n", LoRaDevice.Self.name);
                 UART1_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
                 delay_ms(500);
                 sprintf(BleBuffer, "AT+REBOOT=1\r\n");
@@ -184,7 +187,7 @@ void BLE_SendData(const uint8_t *data, uint16_t len)
 {
     if (ble_state.connect)
     {
-        Debug_B("blesend:%s", data);
+        LOG_I(TAG, "blesend:%s", data);
         UART1_SendData(data, len);
         delay_ms(100);
     }
@@ -224,7 +227,7 @@ void uart_log_init(uint32_t uart0_baud)
     uart_config_init(&uart_config);
 
     uart_config.baudrate = uart0_baud;
-    uart_init(UART0, &uart_config); 
+    uart_init(UART0, &uart_config);
     uart_config.baudrate = 115200;
     uart_init(UART1, &uart_config);
 
@@ -284,9 +287,8 @@ static void board_init()
     rcc_enable_peripheral_clk(RCC_PERIPHERAL_LORA, true);
 
     delay_ms(100);
-	
 
-    watch_dog_init();
+//    watch_dog_init();
     pwr_xo32k_lpm_cmd(true);
     BSTimer_Init();
     /* 复位Lora模块 */

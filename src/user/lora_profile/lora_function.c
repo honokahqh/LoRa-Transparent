@@ -1,5 +1,6 @@
 #include "lora_core.h"
 
+#define TAG "LoRa function"
 /**
  * Get_IDLE_ID
  * @brief 获取最小空闲ID
@@ -9,12 +10,12 @@
 uint8_t Get_IDLE_ID()
 {
     uint8_t i;
-    for (i = 0; i < Device_Num_Max; i++)
+    for (i = 0; i < MAX_CHILDREN; i++)
     {
-        if (Associated_devices[i].SAddr == 0)
+        if (LoRaDevice.Slaver[i].shortAddress == 0)
             break;
     }
-    if (i < Device_Num_Max) // 有空闲ID
+    if (i < MAX_CHILDREN) // 有空闲ID
         return i;
     return 0xFF;
 }
@@ -28,17 +29,14 @@ uint8_t Get_IDLE_ID()
 uint8_t Compare_ShortAddr(uint16_t Short_Addr)
 {
     uint8_t i;
-    for (i = 0; i < Device_Num_Max; i++)
-        if (Associated_devices[i].SAddr == Short_Addr && Associated_devices[i].SAddr != 0)
+    for (i = 0; i < MAX_CHILDREN; i++)
+        if (LoRaDevice.Slaver[i].shortAddress == Short_Addr && LoRaDevice.Slaver[i].shortAddress != 0)
             break;
-    if (i < Device_Num_Max)
+    if (i < MAX_CHILDREN)
         return i;
     return 0xFF;
 }
-uint8_t Compare_Register_SAddr(uint16_t Short_Addr)
-{
-    return 0;
-}
+
 /**
  * Compare_MAC
  * @brief MAC地址匹配
@@ -48,15 +46,15 @@ uint8_t Compare_Register_SAddr(uint16_t Short_Addr)
 uint8_t Compare_MAC(uint8_t *Mac)
 {
     uint8_t i, j, count;
-    for (i = 0; i < Device_Num_Max; i++)
+    for (i = 0; i < MAX_CHILDREN; i++)
     {
         count = 0;
-        for (j = 0; j < 8; j++)
+        for (j = 0; j < MAC_Size; j++)
         {
-            if (Associated_devices[i].Mac[j] == Mac[j])
+            if (LoRaDevice.Slaver[i].Mac[j] == Mac[j])
                 count++;
         }
-        if (count == 8)
+        if (count == MAC_Size)
             return i;
     }
     return 0xFF;
@@ -84,12 +82,21 @@ uint8_t XOR_Calculate(uint8_t *data, uint8_t len)
  */
 void Lora_ReceiveData2State()
 {
-    Lora_State.Rx_DevType = Lora_State.Rx_Data[DevType_Addr];
-    Lora_State.Rx_PanID = (Lora_State.Rx_Data[PanIDH_Addr] << 8) + Lora_State.Rx_Data[PanIDL_Addr];
-    Lora_State.Rx_DAddr = (Lora_State.Rx_Data[DAddrH_Addr] << 8) + Lora_State.Rx_Data[DAddrL_Addr];
-    Lora_State.Rx_SAddr = (Lora_State.Rx_Data[SAddrH_Addr] << 8) + Lora_State.Rx_Data[SAddrL_Addr];
-    Lora_State.Rx_CMD = Lora_State.Rx_Data[Cmd_Addr];
-    Lora_State.Rx_PID = Lora_State.Rx_Data[PackID_Addr];
+    LoRaPacket.Rx_DevType = LoRaPacket.Rx_Data[DevType_Addr];
+    LoRaPacket.Rx_PanID = (LoRaPacket.Rx_Data[PanIDH_Addr] << 8) + LoRaPacket.Rx_Data[PanIDL_Addr];
+    LoRaPacket.Rx_DAddr = (LoRaPacket.Rx_Data[DAddrH_Addr] << 8) + LoRaPacket.Rx_Data[DAddrL_Addr];
+    LoRaPacket.Rx_SAddr = (LoRaPacket.Rx_Data[SAddrH_Addr] << 8) + LoRaPacket.Rx_Data[SAddrL_Addr];
+    LoRaPacket.Rx_CMD = LoRaPacket.Rx_Data[Cmd_Addr];
+    LoRaPacket.Rx_PID = LoRaPacket.Rx_Data[PackID_Addr];
+    LOG_I(TAG, "receive packet from PanID:%04X, SAddr:%04X, DAddr:%04X, CMD:%02X, data:",
+          LoRaPacket.Rx_PanID, LoRaPacket.Rx_SAddr, LoRaPacket.Rx_DAddr, LoRaPacket.Rx_CMD);
+#if LOG_LEVEL >= LOG_INFO
+    // for (uint8_t i = 0; i < LoRaPacket.Rx_Len; i++)
+    //     printf("%02X ", LoRaPacket.Rx_Data[i]); // 打印全部数据
+    for (uint8_t i = 0; i < LoRaPacket.Rx_Data[Len_Addr]; i++)
+        printf("%02X ", LoRaPacket.Rx_Data[Data_Addr + i]);  // 仅打印数据部分
+    printf("\r\n");
+#endif
 }
 
 int StringToMac(const char *str, uint8_t Mac[8])
@@ -182,3 +189,11 @@ int CompareMac(const uint8_t Mac1[8], const uint8_t Mac2[8])
 {
     return memcmp(Mac1, Mac2, 8) == 0;
 }
+
+void Reset_LoRa()
+{
+    LoRaFlashdataSyn();
+    LoraReInit();
+    // system_reset();
+}
+

@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include "lora_core.h"
 
+#define TAG "LoRa AT cmd"
 #define MAX_CMD_LEN 100
 #define MAX_DATA_LEN 100
 
@@ -54,21 +55,21 @@ Command parse_input(char *input)
 void handle_disconnect(Command cmd)
 {
     uint8_t mac[8], id;
-    Debug_B("Disconnecting MAC: %s\n", cmd.data);
+    LOG_I(TAG, "Disconnecting MAC: %s\n", cmd.data);
     StringToMac(cmd.data, mac);
     id = Compare_MAC(mac);
     if (id != 0xFF)
     {
         PCmd_Master_Request_Leave(id);
-        Lora_AsData_Del(id);
-        memset(&Associated_devices[id], 0, sizeof(associated_devices_t));
+        LoRaDelSlaver(id);
+        memset(&LoRaDevice.Slaver[id], 0, sizeof(LoRa_Node_t));
     }
 }
 
 void handle_connect(Command cmd)
 {
-    Debug_B("Connecting MAC: %s\n", cmd.data);
-    StringToMac(cmd.data, Register_Device.Mac);
+    LOG_I(TAG, "Connecting MAC: %s\n", cmd.data);
+    StringToMac(cmd.data, RegisterDevice.device.Mac);
 }
 
 void handle_setname(Command cmd)
@@ -80,7 +81,7 @@ void handle_setname(Command cmd)
     memset(mac8, 0, sizeof(mac8));
     str_tok(cmd.data, "__", mac, &token);
     str_tok(token, "__", name, NULL); // 更新这里
-    Debug_B("Setting MAC: %s to new name: %s\n", mac, name);
+    LOG_I(TAG, "Setting MAC: %s to new name: %s\n", mac, name);
     StringToMac(mac, mac8);
     id = Compare_MAC(mac8);
     PCmd_LoRa_SetSlaverName(name, id);
@@ -88,14 +89,14 @@ void handle_setname(Command cmd)
 
 void handle_setSelfName(Command cmd)
 {
-	char BleBuffer[50];
+    char BleBuffer[50];
     memset(BleBuffer, 0, sizeof(BleBuffer));
     PCmd_LoRa_SetSelfName(cmd.data);
-	sprintf(BleBuffer, "AT+NAME=乐清%s\r\n", Lora_State.SelfName);
+    sprintf(BleBuffer, "AT+NAME=乐清%s\r\n", LoRaDevice.Self.name);
     UART1_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
-    Debug_B("Setting Self Name: %s\n", Lora_State.SelfName);
-	delay_ms(500);
-	sprintf(BleBuffer, "AT+REBOOT=1\r\n");
+    LOG_I(TAG, "Setting Self Name: %s\n", LoRaDevice.Self.name);
+    delay_ms(500);
+    sprintf(BleBuffer, "AT+REBOOT=1\r\n");
     UART1_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
 }
 
@@ -104,24 +105,24 @@ void handle_bleconnect(Command cmd)
     char BleBuffer[50], macStr[24];
     delay_ms(100);
     ble_state.connect = 1;
-    if(Lora_Para_AT.BandWidth == 2 && Lora_Para_AT.SpreadingFactor == 7)
-        sprintf(BleBuffer, "PARA__%d__1__%s__%d__%d", Lora_Para_AT.NetOpen, Lora_State.SelfName, (int)Lora_Para_AT.UART_BAUD, Lora_Para_AT.channel);
-    else if(Lora_Para_AT.BandWidth == 1 && Lora_Para_AT.SpreadingFactor == 7)
-        sprintf(BleBuffer, "PARA__%d__2__%s__%d__%d", Lora_Para_AT.NetOpen, Lora_State.SelfName, (int)Lora_Para_AT.UART_BAUD, Lora_Para_AT.channel);
-    else if(Lora_Para_AT.BandWidth == 0 && Lora_Para_AT.SpreadingFactor == 7)
-        sprintf(BleBuffer, "PARA__%d__3__%s__%d__%d", Lora_Para_AT.NetOpen, Lora_State.SelfName, (int)Lora_Para_AT.UART_BAUD, Lora_Para_AT.channel);
-    else if(Lora_Para_AT.BandWidth == 0 && Lora_Para_AT.SpreadingFactor == 8)
-        sprintf(BleBuffer, "PARA__%d__4__%s__%d__%d", Lora_Para_AT.NetOpen, Lora_State.SelfName, (int)Lora_Para_AT.UART_BAUD, Lora_Para_AT.channel);
-    else if(Lora_Para_AT.BandWidth == 0 && Lora_Para_AT.SpreadingFactor == 9)
-        sprintf(BleBuffer, "PARA__%d__5__%s__%d__%d", Lora_Para_AT.NetOpen, Lora_State.SelfName, (int)Lora_Para_AT.UART_BAUD, Lora_Para_AT.channel);
+    if (LoRaDevice.BandWidth == 2 && LoRaDevice.SpreadingFactor == 7)
+        sprintf(BleBuffer, "PARA__%d__1__%s__%d__%d", LoRaDevice.NetMode, LoRaDevice.Self.name, (int)LoRaBackup.UART_Baud, LoRaDevice.channel);
+    else if (LoRaDevice.BandWidth == 1 && LoRaDevice.SpreadingFactor == 7)
+        sprintf(BleBuffer, "PARA__%d__2__%s__%d__%d", LoRaDevice.NetMode, LoRaDevice.Self.name, (int)LoRaBackup.UART_Baud, LoRaDevice.channel);
+    else if (LoRaDevice.BandWidth == 0 && LoRaDevice.SpreadingFactor == 7)
+        sprintf(BleBuffer, "PARA__%d__3__%s__%d__%d", LoRaDevice.NetMode, LoRaDevice.Self.name, (int)LoRaBackup.UART_Baud, LoRaDevice.channel);
+    else if (LoRaDevice.BandWidth == 0 && LoRaDevice.SpreadingFactor == 8)
+        sprintf(BleBuffer, "PARA__%d__4__%s__%d__%d", LoRaDevice.NetMode, LoRaDevice.Self.name, (int)LoRaBackup.UART_Baud, LoRaDevice.channel);
+    else if (LoRaDevice.BandWidth == 0 && LoRaDevice.SpreadingFactor == 9)
+        sprintf(BleBuffer, "PARA__%d__5__%s__%d__%d", LoRaDevice.NetMode, LoRaDevice.Self.name, (int)LoRaBackup.UART_Baud, LoRaDevice.channel);
     else
-        sprintf(BleBuffer, "PARA__%d__Err__%s__%d__%d", Lora_Para_AT.NetOpen, Lora_State.SelfName, (int)Lora_Para_AT.UART_BAUD, Lora_Para_AT.channel);
+        sprintf(BleBuffer, "PARA__%d__Err__%s__%d__%d", LoRaDevice.NetMode, LoRaDevice.Self.name, (int)LoRaBackup.UART_Baud, LoRaDevice.channel);
     BLE_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
-    if (Lora_Para_AT.SAddrMaster < BoardCast && Lora_Para_AT.SAddrMaster > 0) // master有效
+    if (LoRaDevice.Master.shortAddress < BoardCast && LoRaDevice.Master.shortAddress > 0) // master有效
     {
         memset(macStr, 0, sizeof(macStr));
-        MacToString(Lora_State.MasterMac, macStr);
-        sprintf(BleBuffer, "MASTER__%s__%s__%d", Lora_State.MasterName, macStr, Lora_State.RssiMaster);
+        MacToString(LoRaDevice.Master.Mac, macStr);
+        sprintf(BleBuffer, "MASTER__%s__%s__%d", LoRaDevice.Master.name, macStr, LoRaDevice.Master.RSSI);
         BLE_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
     }
     else
@@ -129,13 +130,13 @@ void handle_bleconnect(Command cmd)
         sprintf(BleBuffer, "MASTER__UnConnected__NULL__NULL");
         BLE_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
     }
-    for (uint8_t i = 0; i < Device_Num_Max; i++)
+    for (uint8_t i = 0; i < MAX_CHILDREN; i++)
     {
-        if (Associated_devices[i].SAddr != 0 && Associated_devices[i].SAddr != 0xFFFF)
+        if (LoRaDevice.Slaver[i].shortAddress != 0 && LoRaDevice.Slaver[i].shortAddress < BoardCast)
         {
             memset(macStr, 0, sizeof(macStr));
-            MacToString(Associated_devices[i].Mac, macStr);
-            sprintf(BleBuffer, "CON__%s__%s__%d", Associated_devices[i].Name, macStr, Associated_devices[i].RSSI);
+            MacToString(LoRaDevice.Slaver[i].Mac, macStr);
+            sprintf(BleBuffer, "CON__%s__%s__%d", LoRaDevice.Slaver[i].name, macStr, LoRaDevice.Slaver[i].RSSI);
             BLE_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
         }
     }
@@ -185,8 +186,6 @@ CommandMap cmd_map[] = {
 // 处理函数原型
 typedef void (*AT_Handler)(int parameter);
 
-Lora_Para_AT_t Lora_Para_AT, Lora_Para_AT_Last;
-
 const char *AT_CommandList[] = {
     "AT+RST",      // 重启
     "AT+CHANNEL",  // 设置信道              重启生效
@@ -217,7 +216,7 @@ AT_Command parseATCommand(char *input)
         if (strncmp(input, AT_CommandList[i], strlen(AT_CommandList[i])) == 0)
         {
             result.index = i;
-            // Debug_B("AT Index:%d\r\n",result.index);
+            // LOG_I(TAG, "AT Index:%d\r\n",result.index);
             const char *param_str = input + strlen(AT_CommandList[i]);
             if (*param_str != '\0')
             {
@@ -240,25 +239,25 @@ void handleSend(uint8_t *data, uint8_t len)
     case Lora_SendData:
         DAddr = data[1] << 8 | data[2];
         CusProfile_Send(DAddr, cmd, &data[3], len - 3, 1);
-        Debug_B("AT+SEND\r\n");
+        LOG_I(TAG, "AT+SEND\r\n");
         break;
     default:
-        Debug_B("ERROR:No such device.\r\n");
+        LOG_I(TAG, "ERROR:No such device.\r\n");
         return;
     }
 }
 
 void handleSleep(int parameter)
 {
-    Debug_B("AT+SLEEP\r\n");
+    LOG_I(TAG, "AT+SLEEP\r\n");
 }
 
 void handleRst(int parameter)
 {
     uint8_t temp_data[8];
     memset(temp_data, 0xFF, 8);
-    Lora_State_Save();
-    Debug_B("AT+RST\r\n");
+    LoRa_NetPara_Save(Type_Lora_net);
+    LOG_I(TAG, "AT+RST\r\n");
     delay_ms(100);
     system_reset();
 }
@@ -267,61 +266,59 @@ void handleChannel(int parameter)
 {
     if (parameter < 0 || parameter > 100)
     {
-        Debug_B("ERROR:Invalid channel number.\r\n");
+        LOG_I(TAG, "ERROR:Invalid channel number.\r\n");
         return;
     }
-    Debug_B("AT+CHANNEL:%d\r\n", parameter);
-    Lora_Para_AT.channel = parameter;
+    LOG_I(TAG, "AT+CHANNEL:%d\r\n", parameter);
+    LoRaBackup.channel = parameter;
 }
 
 void handleAR(int parameter)
 {
     if (parameter < 1 || parameter > 5)
     {
-        Debug_B("ERROR:Invalid bandwidth.\r\n");
+        LOG_I(TAG, "ERROR:Invalid bandwidth.\r\n");
         return;
     }
     switch (parameter)
     {
     case 1:
-        Lora_Para_AT.BandWidth = 2;
-        Lora_Para_AT.SpreadingFactor = 7;
+        LoRaBackup.BandWidth = 2;
+        LoRaBackup.SpreadingFactor = 7;
         break;
     case 2:
-        Lora_Para_AT.BandWidth = 1;
-        Lora_Para_AT.SpreadingFactor = 7;
+        LoRaBackup.BandWidth = 1;
+        LoRaBackup.SpreadingFactor = 7;
         break;
     case 3:
-        Lora_Para_AT.BandWidth = 0;
-        Lora_Para_AT.SpreadingFactor = 7;
+        LoRaBackup.BandWidth = 0;
+        LoRaBackup.SpreadingFactor = 7;
         break;
     case 4:
-        Lora_Para_AT.BandWidth = 0;
-        Lora_Para_AT.SpreadingFactor = 8;
+        LoRaBackup.BandWidth = 0;
+        LoRaBackup.SpreadingFactor = 8;
         break;
     case 5:
-        Lora_Para_AT.BandWidth = 0;
-        Lora_Para_AT.SpreadingFactor = 9;
+        LoRaBackup.BandWidth = 0;
+        LoRaBackup.SpreadingFactor = 9;
         break;
     default:
         break;
     }
-    Lora_State_Save();
-    Lora_State_Data_Syn();
-    // LoraReInit();
-    system_reset();
-    Debug_B("AT+AR:%d\r\n", parameter);
-
+    LoRa_NetPara_Save(Type_Lora_net);
+    LOG_I(TAG, "AT+AR:%d\r\n", parameter);
+    LoraReInit();
+    
 }
 
 void handleTxpower(int parameter)
 {
     if (parameter < 0 || parameter > 21)
     {
-        Debug_B("ERROR:Invalid tx power.\r\n");
+        LOG_I(TAG, "ERROR:Invalid tx power.\r\n");
         return;
     }
-    Debug_B("AT+TXPOWER:%d\r\n", parameter);
+    LOG_I(TAG, "AT+TXPOWER:%d\r\n", parameter);
     // Lora_Para_AT.Power = parameter;
 }
 
@@ -330,128 +327,100 @@ void handlePanid(int parameter)
     // 0xFFFE为组播ID、0xFFFF为广播ID
     if (parameter < 1 || parameter > 0xFFFD)
     {
-        Debug_B("ERROR:Invalid panid number.\r\n");
+        LOG_I(TAG, "ERROR:Invalid panid number.\r\n");
         return;
     }
-    Debug_B("AT+PANID:%04X\r\n", parameter);
-    Lora_Para_AT.PanID = parameter;
+    LOG_I(TAG, "AT+PANID:%04X\r\n", parameter);
+    LoRaBackup.PanID = parameter;
 }
 
 void handleSaddr(int parameter)
 {
     if (parameter < 1 || parameter > 0xFFFD)
     {
-        Debug_B("ERROR:Invalid SADDR number.\r\n");
+        LOG_I(TAG, "ERROR:Invalid SADDR number.\r\n");
         return;
     }
-    Debug_B("AT+SADDR:%04X\r\n", parameter);
-    Lora_Para_AT.SAddrSelf = parameter;
+    LOG_I(TAG, "AT+SADDR:%04X\r\n", parameter);
+    LoRaBackup.SAddr = parameter;
 }
 
 void handleNetopen(int parameter)
 {
-    Debug_B("AT+NETOPEN:%d\r\n", parameter % 256);
+    LOG_I(TAG, "AT+NETOPEN:%d\r\n", parameter % 256);
     if (parameter == 1)
-        Lora_Para_AT.NetOpen = 1;
+        LoRaDevice.NetMode = 1;
     else if (parameter == 2)
-        Lora_Para_AT.NetOpen = 2;
+        LoRaDevice.NetMode = 2;
     else
-        Lora_Para_AT.NetOpen = 0;
-    Lora_State.NetOpen = Lora_Para_AT.NetOpen;
-    Lora_State_Save();
-    Lora_State_Data_Syn();
-    LoraReInit();
-    system_reset();
+        LoRaDevice.NetMode = 0;
+    LoRaDevice.NetMode = LoRaDevice.NetMode;
+    LoRa_NetPara_Save(Type_Lora_net);
+    Reset_LoRa();
 }
 
 void handleNetclose(int parameter)
 {
-    Debug_B("AT+NETCLOSE\r\n");
-    Lora_Para_AT.NetOpen = 0;
-    Lora_State.NetOpen = Lora_Para_AT.NetOpen;
-    Lora_State_Save();
-    Lora_State_Data_Syn();
-    // LoraReInit();
-    system_reset();
+    LOG_I(TAG, "AT+NETCLOSE\r\n");
+    LoRaDevice.NetMode = 0;
+    LoRa_NetPara_Save(Type_Lora_net);
+    Reset_LoRa();
 }
 
 void handleLeave(int parameter)
 {
-    Debug_B("AT+LEAVE\r\n");
+    LOG_I(TAG, "AT+LEAVE\r\n");
     // 处理逻辑...
     PCmd_Slaver_Request_Leave();
 }
 
 void handleDelet(int parameter)
 {
-    if (parameter < 0 || parameter > Device_Num_Max)
+    if (parameter < 0 || parameter > MAX_CHILDREN)
     {
-        Debug_B("Invalid delet number.\r\n");
+        LOG_I(TAG, "Invalid delet number.\r\n");
         return;
     }
-    Debug_B("AT+DELET:%d\r\n", parameter);
+    LOG_I(TAG, "AT+DELET:%d\r\n", parameter);
     PCmd_Master_Request_Leave(parameter);
-    Lora_AsData_Del(parameter);
-    memset(&Associated_devices[parameter], 0, sizeof(associated_devices_t));
+    LoRaDelSlaver(parameter);
+    memset(&LoRaDevice.Slaver[parameter], 0, sizeof(LoRa_Node_t));
 }
 
 void handlePrint(int parameter)
 {
-    Debug_B("AT+PRINT:");
-    if (Lora_State.Net_State == 0)
-    {
-        Debug_B("NO Master");
-    }
-    else
-    {
-        Debug_B("SAddrMaster:%d\r\n", Lora_State.SAddrMaster);
-    }
-    Debug_B("SAddr:%d\r\n", Lora_State.SAddrSelf);
-    Debug_B("PanID:%d\r\n", Lora_State.PanID);
-    Debug_B("Channel:%d\r\n", Lora_State.Channel);
-    Debug_B("BW:%d\r\n", Lora_Para_AT.BandWidth);
-    Debug_B("SF:%d\r\n\r\n", Lora_Para_AT.SpreadingFactor);
-    Debug_B("Slaver:\r\n");
-    for (uint8_t i = 0; i < Device_Num_Max; i++)
-    {
-        if (Associated_devices[i].SAddr != 0 && Associated_devices[i].SAddr != 0xFFFF)
-        {
-            Debug_B("   ID:%d SAddr:%04X Mac:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", i, Associated_devices[i].SAddr,
-                    Associated_devices[i].Mac[0], Associated_devices[i].Mac[1], Associated_devices[i].Mac[2], Associated_devices[i].Mac[3],
-                    Associated_devices[i].Mac[4], Associated_devices[i].Mac[5], Associated_devices[i].Mac[6], Associated_devices[i].Mac[7]);
-        }
-    }
+
 }
 
 void handleBaud(int parameter)
 {
-    if(parameter == 9600)
+    if (parameter == 9600)
     {
-        Lora_Para_AT.UART_BAUD = 9600;
+        LoRaBackup.UART_Baud = 9600;
     }
-    else if(parameter == 19200)
+    else if (parameter == 19200)
     {
-        Lora_Para_AT.UART_BAUD = 19200;
+        LoRaBackup.UART_Baud = 19200;
     }
-    else if(parameter == 38400)
+    else if (parameter == 38400)
     {
-        Lora_Para_AT.UART_BAUD = 38400;
+        LoRaBackup.UART_Baud = 38400;
     }
-    else if(parameter == 57600)
+    else if (parameter == 57600)
     {
-        Lora_Para_AT.UART_BAUD = 57600;
+        LoRaBackup.UART_Baud = 57600;
     }
-    else if(parameter == 115200)
+    else if (parameter == 115200)
     {
-        Lora_Para_AT.UART_BAUD = 115200;
+        LoRaBackup.UART_Baud = 115200;
     }
     else
     {
-        Debug_B("ERROR:Invalid baud rate.\r\n");
+        LOG_I(TAG, "ERROR:Invalid baud rate.\r\n");
         return;
     }
-    Debug_B("AT+BAUD:%d\r\n", parameter);
-    Lora_State_Save();
+    LOG_I(TAG, "AT+BAUD:%d\r\n", parameter);
+    LoRa_NetPara_Save(Type_Lora_net);
     system_reset();
 }
 // 定义处理函数数组
@@ -474,7 +443,7 @@ void executeCommand(AT_Command parsed_command)
 {
     if (parsed_command.index != 0xFF)
     {
-        Debug_B("index:%d \r\n", parsed_command.index);
+        LOG_I(TAG, "index:%d \r\n", parsed_command.index);
         AT_Handlers[parsed_command.index](parsed_command.parameter);
     }
 }
@@ -486,7 +455,7 @@ uint8_t processATCommand(char *input)
     {
         Command cmd = parse_input(input);
         if (handle_command(cmd, cmd_map, sizeof(cmd_map) / sizeof(cmd_map[0])) == false)
-        {   
+        {
             return 0;
         }
     }

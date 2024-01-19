@@ -46,7 +46,7 @@ static int Task1_Lora_Rx(struct pt *pt)
 	while (1)
 	{
 		Lora_IRQ_Rrocess();
-		if(Lora_Para_AT.NetOpen)
+		if(LoRaDevice.NetMode)
 		{
 			if(count_5ms == 50)
 			{
@@ -79,7 +79,7 @@ static int Task2_1s_Period(struct pt *pt)
 	PT_BEGIN(pt);
 	while (1)
 	{
-		Slaver_Period_1s();
+		LoRa_Period_1s();
 		wdg_reload();				// 喂狗
 		PT_TIMER_DELAY(pt, 1000);
 	}
@@ -119,7 +119,7 @@ static int Task4_uart0(struct pt *pt)
 	while (1)
 	{
 		PT_WAIT_UNTIL(pt, uart_state.has_data); // 等待串口数据
-		if(uart_state.rx_len && Lora_State.PanID != BoardCast)
+		if(uart_state.rx_len && LoRaDevice.PanID != BoardCast)
 		{
 			CusProfile_Send(BoardCast, Lora_SendData, uart_state.rx_buff, uart_state.rx_len, false);
 		}
