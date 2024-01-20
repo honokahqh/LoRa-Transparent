@@ -39,26 +39,26 @@ int32_t flash_erase_all(void)
  */
 int32_t flash_erase_page(uint32_t addr)
 {
-    if(addr != 0x0800D000 && addr != 0x0800E000 && addr != 0x0800F000)
-        return ERRNO_ERROR;
-    //clear sr
-    if(SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK)
-        SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
-    
-    FLASH_CR_UNLOCK();
-    EFC->CR = (EFC->CR & EFC_CR_ECC_DISABLE_MASK) | EFC_CR_PAGE_ERASE_EN_MASK | EFC_CR_PREFETCH_EN_MASK;
-    FLASH_CR_LOCK();
+//    if(addr != 0x0800D000 && addr != 0x0800E000 && addr != 0x0800F000)
+//        return ERRNO_ERROR;
+//    //clear sr
+//    if(SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK)
+//        SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
+//    
+//    FLASH_CR_UNLOCK();
+//    EFC->CR = (EFC->CR & EFC_CR_ECC_DISABLE_MASK) | EFC_CR_PAGE_ERASE_EN_MASK | EFC_CR_PREFETCH_EN_MASK;
+//    FLASH_CR_LOCK();
 
-    TREMO_REG_WR(addr, 0xFFFFFFFF);
+//    TREMO_REG_WR(addr, 0xFFFFFFFF);
 
-    if (SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK) {
-        SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
-        return ERRNO_FLASH_SEC_ERROR;
-    }
+//    if (SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK) {
+//        SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
+//        return ERRNO_FLASH_SEC_ERROR;
+//    }
 
-    while (!(EFC->SR & EFC_SR_OPERATION_DONE))
-        ;
-    EFC->SR = EFC_SR_OPERATION_DONE;
+//    while (!(EFC->SR & EFC_SR_OPERATION_DONE))
+//        ;
+//    EFC->SR = EFC_SR_OPERATION_DONE;
 
     return ERRNO_OK;
 }
@@ -74,45 +74,45 @@ int32_t flash_erase_page(uint32_t addr)
  */
 int32_t flash_program_bytes(uint32_t addr, uint8_t* data, uint32_t size)
 {
-    uint8_t tmp[8];
-    uint8_t* p            = tmp;
-    uint32_t aligned_size = 0;
-    if(addr < 0x0800D000 || addr+size >= 0x0800F000)
-        return ERRNO_ERROR;
-    //clear sr
-    if(SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK)
-        SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
-    
-    FLASH_CR_UNLOCK();
-    EFC->CR = (EFC->CR & EFC_CR_ECC_DISABLE_MASK) | EFC_CR_PROG_EN_MASK | EFC_CR_PREFETCH_EN_MASK;
-    FLASH_CR_LOCK();
+//    uint8_t tmp[8];
+//    uint8_t* p            = tmp;
+//    uint32_t aligned_size = 0;
+//    // if(addr < 0x0800D000 || addr+size >= 0x08010000)
+//    //     return ERRNO_ERROR;
+//    //clear sr
+//    if(SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK)
+//        SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
+//    
+//    FLASH_CR_UNLOCK();
+//    EFC->CR = (EFC->CR & EFC_CR_ECC_DISABLE_MASK) | EFC_CR_PROG_EN_MASK | EFC_CR_PREFETCH_EN_MASK;
+//    FLASH_CR_LOCK();
 
-    aligned_size = (size)&0xFFFFFFF8;
-    memset((char*)tmp, 0xFF, sizeof(tmp));
-    for (int i = aligned_size; i < size; i++) {
-        tmp[i - aligned_size] = data[i];
-    }
+//    aligned_size = (size)&0xFFFFFFF8;
+//    memset((char*)tmp, 0xFF, sizeof(tmp));
+//    for (int i = aligned_size; i < size; i++) {
+//        tmp[i - aligned_size] = data[i];
+//    }
 
-    for (int i = 0; i < size; i += 8) {
-        if (i < aligned_size) {
-            EFC->PROGRAM_DATA0 = *(uint32_t*)(data + i);
-            EFC->PROGRAM_DATA1 = *(uint32_t*)(data + i + 4);
-        } else {
-            EFC->PROGRAM_DATA0 = *(uint32_t*)(p);
-            EFC->PROGRAM_DATA1 = *(uint32_t*)(p + 4);
-        }
-        // program addr
-        TREMO_REG_WR(addr + i, 0xFFFFFFFF);
+//    for (int i = 0; i < size; i += 8) {
+//        if (i < aligned_size) {
+//            EFC->PROGRAM_DATA0 = *(uint32_t*)(data + i);
+//            EFC->PROGRAM_DATA1 = *(uint32_t*)(data + i + 4);
+//        } else {
+//            EFC->PROGRAM_DATA0 = *(uint32_t*)(p);
+//            EFC->PROGRAM_DATA1 = *(uint32_t*)(p + 4);
+//        }
+//        // program addr
+//        TREMO_REG_WR(addr + i, 0xFFFFFFFF);
 
-        if (SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK) {
-            SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
-            return ERRNO_FLASH_SEC_ERROR;
-        }
+//        if (SEC->SR & SEC_SR_FLASH_ACCESS_ERROR_MASK) {
+//            SEC->SR = SEC_SR_FLASH_ACCESS_ERROR_MASK;
+//            return ERRNO_FLASH_SEC_ERROR;
+//        }
 
-        while (!(EFC->SR & EFC_SR_OPERATION_DONE))
-            ;
-        EFC->SR = EFC_SR_OPERATION_DONE;
-    }
+//        while (!(EFC->SR & EFC_SR_OPERATION_DONE))
+//            ;
+//        EFC->SR = EFC_SR_OPERATION_DONE;
+//    }
 
     return ERRNO_OK;
 }

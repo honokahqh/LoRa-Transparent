@@ -82,9 +82,9 @@ void Cmd_SlaverInNet()
     }
 
     LoRaDevice.Slaver[i].RSSI = LoRaPacket.Rx_RSSI;
+    LoRaDevice.Slaver[i].timeout = 0;
     LoRaAddSlaver(i);
-    LOG_I(TAG, "Send DeviceAnnonce\r\n");
-    LOG_I(TAG, "ID:%d SAddr:%04X Mac:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", i, LoRaDevice.Slaver[i].shortAddress,
+    LOG_I(TAG, "New device ID:%d SAddr:%04X Mac:%02X:%02X:%02X:%02X:%02X:%02X:%02X:%02X\r\n", i, LoRaDevice.Slaver[i].shortAddress,
                 LoRaDevice.Slaver[i].Mac[0], LoRaDevice.Slaver[i].Mac[1], LoRaDevice.Slaver[i].Mac[2], LoRaDevice.Slaver[i].Mac[3],
                 LoRaDevice.Slaver[i].Mac[4], LoRaDevice.Slaver[i].Mac[5], LoRaDevice.Slaver[i].Mac[6], LoRaDevice.Slaver[i].Mac[7]);
     memset(infoStr, 0, 60);

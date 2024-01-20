@@ -61,8 +61,6 @@ void handle_disconnect(Command cmd)
     if (id != 0xFF)
     {
         PCmd_Master_Request_Leave(id);
-        LoRaDelSlaver(id);
-        memset(&LoRaDevice.Slaver[id], 0, sizeof(LoRa_Node_t));
     }
 }
 

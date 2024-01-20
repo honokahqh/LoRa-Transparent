@@ -13,7 +13,7 @@
 #define FlashData1_ADDR              0x0800E000
 #define FlashData2_ADDR              0x0800F000 
 
-// page 1 存储类型
+// page 1 存储类型 长度8字节对齐
 #define Type_Lora_net 0x01
 #define Type_Lora_net_len 16
 
@@ -21,18 +21,18 @@
 #define Type_Lora_SelfName_len Name_Size
 
 #define Type_Lora_MasterName 0x03
-#define Type_Lora_MasterName_len Name_Size
-
-// page 3
-#define Type_Lora_Parent 0x04
-#define Type_Lora_Parent_len Name_Size + 2
-
-#define Type_Lora_Child 0x05
-#define Type_Lora_Child_len Name_Size + 2
+#define Type_Lora_MasterName_len (Name_Size + 8)
 
 // page 2
 #define Type_Lora_Slaver        0x06
 #define Type_Lora_Slaver_len    32
+
+// // page 3
+// #define Type_Lora_Parent 0x04
+// #define Type_Lora_Parent_len Name_Size + 2
+
+// #define Type_Lora_Child 0x05
+// #define Type_Lora_Child_len Name_Size + 2
 
 void LoRa_NetPara_Save(uint8_t type); // page1相关数据存储
 

@@ -25,7 +25,7 @@
 #include "log.h"
 
 #define Dev_Version 101
-#define __DEBUG
+//#define __DEBUG
 #ifdef __DEBUG
 #define normal_printf(format, ...) printf(format, ##__VA_ARGS__);
 #define tick_printf(format, ...)                                   \

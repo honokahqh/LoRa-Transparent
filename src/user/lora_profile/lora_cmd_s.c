@@ -41,6 +41,7 @@ void Cmd_DeviceAnnonce()
     LoRaDevice.Net_State = Net_JoinGateWay;
     LoRaDevice.NetMode = Normal;
     memcpy(LoRaDevice.Master.Mac, &LoRaPacket.Rx_Data[Data_Addr], 8);
+    memset(&RegisterDevice, 0, sizeof(RegisterDevice));
     memset(LoRaDevice.Master.name, 0, Name_Size);
     strncpy(LoRaDevice.Master.name, (char *)&LoRaPacket.Rx_Data[Data_Addr + 8], LoRaPacket.Rx_Data[Len_Addr] - 8);
     LoRaDevice.Master.name[Name_Size - 1] = '\0';

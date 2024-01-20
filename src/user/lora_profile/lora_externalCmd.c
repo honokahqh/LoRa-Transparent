@@ -4,7 +4,7 @@
 
 const static uint8_t BindFail[] = "BindFail\r\n";
 const static uint8_t BindSuccess[] = "BindSuccess\r\n";
-// ÉèÖÃ´Ó»úÃû³Æ
+// è®¾ç½®ä»æœºåç§°
 void PCmd_LoRa_SetSlaverName(char *name, uint8_t ID)
 {
     if (ID >= MAX_CHILDREN)
@@ -16,7 +16,7 @@ void PCmd_LoRa_SetSlaverName(char *name, uint8_t ID)
     LoRaAddSlaver(ID);
 }
 
-// ´Ó»ú¶ÔÉèÖÃÃû³ÆÃüÁî´¦Àí
+// ä»æœºå¯¹è®¾ç½®åç§°å‘½ä»¤å¤„ç†
 void Cmd_LoRa_SetSlaverName()
 {
     char BleBuffer[50];
@@ -24,7 +24,7 @@ void Cmd_LoRa_SetSlaverName()
     memset(LoRaDevice.Self.name, 0, Name_Size);
     strncpy(LoRaDevice.Self.name, (char *)&LoRaPacket.Rx_Data[Data_Addr], LoRaPacket.Rx_Data[Len_Addr]);
     LoRaDevice.Self.name[Name_Size - 1] = '\0';
-    sprintf(BleBuffer, "AT+NAME=ÀÖÇå%s\r\n", LoRaDevice.Self.name);
+    sprintf(BleBuffer, "AT+NAME=ä¹æ¸…%s\r\n", LoRaDevice.Self.name);
     UART1_SendData((uint8_t *)BleBuffer, strlen(BleBuffer));
     delay_ms(500);
     sprintf(BleBuffer, "AT+REBOOT=1\r\n");
@@ -32,7 +32,7 @@ void Cmd_LoRa_SetSlaverName()
     LoRa_NetPara_Save(Type_Lora_SelfName);
 }
 
-// ÉèÖÃ×ÔÉíÃû³Æ
+// è®¾ç½®è‡ªèº«åç§°
 void PCmd_LoRa_SetSelfName(char *name)
 {
     memset(LoRaDevice.Self.name, 0, Name_Size);
@@ -42,7 +42,7 @@ void PCmd_LoRa_SetSelfName(char *name)
     LoRa_NetPara_Save(Type_Lora_SelfName);
 }
 
-// ¶ÔÉè±¸ÉèÖÃ×ÔÉíÃû³Æ´¦Àí
+// å¯¹è®¾å¤‡è®¾ç½®è‡ªèº«åç§°å¤„ç†
 void Cmd_LoRa_SetSelfName()
 {
     if (LoRaPacket.Rx_SAddr == LoRaDevice.Master.shortAddress)
@@ -70,7 +70,7 @@ void Cmd_LoRa_SetSelfName()
 
 static uint16_t BindSAddrSrc, BindSAddrDst, BestRouter;
 static int16_t RouterRssi;
-// Ô´½Úµã·¢ÆğÇëÇó
+// æºèŠ‚ç‚¹å‘èµ·è¯·æ±‚
 void PCmd_LoRa_Bind_Init(uint16_t shortAddress)
 {
     uint8_t i;
@@ -81,7 +81,7 @@ void PCmd_LoRa_Bind_Init(uint16_t shortAddress)
     }
     if (i == MAX_CHILDREN)
     {
-        LOG_I(TAG, "%s, ÖĞ¼Ì½ÚµãÒÑÂú\r\n", __func__);
+        LOG_I(TAG, "%s, ä¸­ç»§èŠ‚ç‚¹å·²æ»¡\r\n", __func__);
         BLE_SendData((uint8_t *)BindFail, sizeof(BindFail) - 1);
         return;
     }
@@ -105,7 +105,7 @@ void PCmd_LoRa_Bind_Init(uint16_t shortAddress)
     CusProfile_Send(BoardCast, LoRa_Bind_Init, shortAddress_buffer, 2, FALSE);
 }
 
-// ÖĞ¼Ì»Ø¸´Ô´½Úµã-ÁĞ±íÄÚÓĞÄ¿±ê½Úµã
+// ä¸­ç»§å›å¤æºèŠ‚ç‚¹-åˆ—è¡¨å†…æœ‰ç›®æ ‡èŠ‚ç‚¹
 void Cmd_LoRa_Bind_Init()
 {
     uint8_t i = 0;
@@ -118,7 +118,7 @@ void Cmd_LoRa_Bind_Init()
     }
     if (i == MAX_CHILDREN)
     {
-        LOG_I(TAG, "%s, ÖĞ¼Ì½ÚµãÒÑÂú\r\n", __func__);
+        LOG_I(TAG, "%s, ä¸­ç»§èŠ‚ç‚¹å·²æ»¡\r\n", __func__);
         return;
     }
     for (i = 0; i < MAX_CHILDREN; i++)
@@ -128,7 +128,7 @@ void Cmd_LoRa_Bind_Init()
             uint8_t temp_data[4];
             temp_data[0] = LoRaDevice.Neighbor[i].RSSI >> 8;
             temp_data[1] = LoRaDevice.Neighbor[i].RSSI & 0xFF;
-            LOG_I(TAG, "²éÑ¯µ½¶ÔÓ¦ÁÚ¾Ó½Úµã\n");
+            LOG_I(TAG, "æŸ¥è¯¢åˆ°å¯¹åº”é‚»å±…èŠ‚ç‚¹\n");
             switch (LoRaDevice.SpreadingFactor - LoRaDevice.BandWidth)
             {
             case 5:
@@ -152,19 +152,19 @@ void Cmd_LoRa_Bind_Init()
     }
 }
 
-// Ô´½Úµã¼ÇÂ¼×îÓÅÖĞ¼Ì
+// æºèŠ‚ç‚¹è®°å½•æœ€ä¼˜ä¸­ç»§
 void Cmd_LoRa_Bind_NbrReply()
 {
     int16_t DstRssi = (LoRaPacket.Rx_Data[Data_Addr] << 8) + LoRaPacket.Rx_Data[Data_Addr + 1];
-    if (RouterRssi < LoRaPacket.Rx_RSSI + DstRssi) // ĞÅºÅÇ¿¶ÈºÍ×î´ó
+    if (RouterRssi < LoRaPacket.Rx_RSSI + DstRssi) // ä¿¡å·å¼ºåº¦å’Œæœ€å¤§
     {
         RouterRssi = LoRaPacket.Rx_RSSI + DstRssi;
         BestRouter = LoRaPacket.Rx_SAddr;
     }
-    // CusProfile_Send(LoRaPacket.Rx_SAddr, LoRa_Bind_SrcAck, NULL, 0, TRUE); µÈ´ıcmd³¬Ê±
+    // CusProfile_Send(LoRaPacket.Rx_SAddr, LoRa_Bind_SrcAck, NULL, 0, TRUE); ç­‰å¾…cmdè¶…æ—¶
 }
 
-// Ô´½Úµã·¢Æğ°ó¶¨
+// æºèŠ‚ç‚¹å‘èµ·ç»‘å®š
 void PCmd_LoRa_Bind_RelayTry()
 {
     uint8_t temp_data[18];
@@ -177,7 +177,7 @@ void PCmd_LoRa_Bind_RelayTry()
         CusProfile_Send(LoRaPacket.Rx_SAddr, LoRa_Bind_SrcAck, (uint8_t*)LoRaDevice.Self.name, 18, TRUE);
 }
 
-// ÖĞ¼Ì½ÚµãÏòÄ¿±ê½Úµã·¢Æğ°ó¶¨
+// ä¸­ç»§èŠ‚ç‚¹å‘ç›®æ ‡èŠ‚ç‚¹å‘èµ·ç»‘å®š
 void Cmd_LoRa_Bind_SrcAck()
 {
     uint8_t temp_data[36];
@@ -188,7 +188,7 @@ void Cmd_LoRa_Bind_SrcAck()
     CusProfile_Send(BindSAddrDst, LoRa_Bind_RelayTry, temp_data, 36, TRUE);
 }
 
-// Ä¿±ê½Úµã»Ø¸´ÖĞ¼Ì½Úµã
+// ç›®æ ‡èŠ‚ç‚¹å›å¤ä¸­ç»§èŠ‚ç‚¹
 void Cmd_LoRa_Bind_RelayTry()
 {
     uint8_t i;
@@ -199,11 +199,11 @@ void Cmd_LoRa_Bind_RelayTry()
     }
     if (i == MAX_CHILDREN)
     {
-        LOG_I(TAG, "%s, ÖĞ¼Ì½ÚµãÒÑÂú\r\n", __func__);
+        LOG_I(TAG, "%s, ä¸­ç»§èŠ‚ç‚¹å·²æ»¡\r\n", __func__);
         return;
     }
     uint8_t temp_data[54];
-    // ´ËÊ± Ä¿±ê½Úµã¼ÇÂ¼±¾Á´Â·
+    // æ­¤æ—¶ ç›®æ ‡èŠ‚ç‚¹è®°å½•æœ¬é“¾è·¯
     memcpy(temp_data, &LoRaPacket.Rx_Data[Data_Addr], 36);
     LoRaDevice.RelayGroup[i].A.shortAddress = (temp_data[0] << 8) + temp_data[1];
     memcpy(LoRaDevice.RelayGroup[i].A.name, &temp_data[2], Name_Size);
@@ -218,11 +218,11 @@ void Cmd_LoRa_Bind_RelayTry()
     CusProfile_Send(LoRaPacket.Rx_SAddr, LoRa_Bind_TgtAck, temp_data, 54, TRUE);
 }
 
-// ÖĞ¼Ì½Úµã»Ø¸´Ô´½Úµã
+// ä¸­ç»§èŠ‚ç‚¹å›å¤æºèŠ‚ç‚¹
 void Cmd_LoRa_Bind_TgtAck()
 {
     uint8_t temp_data[54], i;
-    // ´ËÊ± ÖĞ¼Ì½Úµã¼ÇÂ¼±¾Á´Â·
+    // æ­¤æ—¶ ä¸­ç»§èŠ‚ç‚¹è®°å½•æœ¬é“¾è·¯
     memcpy(temp_data, &LoRaPacket.Rx_Data[Data_Addr], 54);
     for (i = 0; i < MAX_CHILDREN; i++)
     {
@@ -231,7 +231,7 @@ void Cmd_LoRa_Bind_TgtAck()
     }
     if (i == MAX_CHILDREN)
     {
-        LOG_I(TAG, "%s, ÖĞ¼Ì½ÚµãÒÑÂú\r\n", __func__);
+        LOG_I(TAG, "%s, ä¸­ç»§èŠ‚ç‚¹å·²æ»¡\r\n", __func__);
         return;
     }
     LoRaDevice.RelayGroup[i].A.shortAddress = (temp_data[0] << 8) + temp_data[1];
@@ -243,10 +243,10 @@ void Cmd_LoRa_Bind_TgtAck()
     CusProfile_Send(BindSAddrSrc, LoRa_Bind_Success, temp_data, 54, TRUE);
 }
 
-// Ô´½Úµã»Ø¸´ÖĞ¼Ì½Úµã
+// æºèŠ‚ç‚¹å›å¤ä¸­ç»§èŠ‚ç‚¹
 void Cmd_LoRa_Bind_Success()
 {
-    // ´ËÊ± Ô´½Úµã¼ÇÂ¼±¾Á´Â·
+    // æ­¤æ—¶ æºèŠ‚ç‚¹è®°å½•æœ¬é“¾è·¯
     uint8_t temp_data[54];
     memcpy(temp_data, &LoRaPacket.Rx_Data[Data_Addr], 54);
     uint8_t i;
@@ -257,7 +257,7 @@ void Cmd_LoRa_Bind_Success()
     }
     if (i == MAX_CHILDREN)
     {
-        LOG_I(TAG, "%s, ÖĞ¼Ì½ÚµãÒÑÂú\r\n", __func__);
+        LOG_I(TAG, "%s, ä¸­ç»§èŠ‚ç‚¹å·²æ»¡\r\n", __func__);
         return;
     }
     LoRaDevice.RelayGroup[i].A.shortAddress = (temp_data[0] << 8) + temp_data[1];

@@ -88,8 +88,8 @@ void Lora_ReceiveData2State()
     LoRaPacket.Rx_SAddr = (LoRaPacket.Rx_Data[SAddrH_Addr] << 8) + LoRaPacket.Rx_Data[SAddrL_Addr];
     LoRaPacket.Rx_CMD = LoRaPacket.Rx_Data[Cmd_Addr];
     LoRaPacket.Rx_PID = LoRaPacket.Rx_Data[PackID_Addr];
-    LOG_I(TAG, "receive packet from PanID:%04X, SAddr:%04X, DAddr:%04X, CMD:%02X, data:",
-          LoRaPacket.Rx_PanID, LoRaPacket.Rx_SAddr, LoRaPacket.Rx_DAddr, LoRaPacket.Rx_CMD);
+    LOG_I(TAG, "receive packet from PanID:%04X, SAddr:%04X, DAddr:%04X, CMD:%02X, RSSI:%d, data:",
+          LoRaPacket.Rx_PanID, LoRaPacket.Rx_SAddr, LoRaPacket.Rx_DAddr, LoRaPacket.Rx_CMD, LoRaPacket.Rx_RSSI);
 #if LOG_LEVEL >= LOG_INFO
     // for (uint8_t i = 0; i < LoRaPacket.Rx_Len; i++)
     //     printf("%02X ", LoRaPacket.Rx_Data[i]); // 打印全部数据
